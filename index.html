@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#071522">
+<title>Usina Hidrelétrica — Laboratório Imersivo de Energia</title>
+<style>
+:root{--bg:#071522;--panel:rgba(8,24,38,.93);--line:rgba(151,205,222,.2);--txt:#eef8fb;--muted:#9bb7c4;--cyan:#66e0e8;--blue:#42a9e8;--gold:#f0bd65;--green:#8ce0aa;--red:#ff8d83}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#071522;color:var(--txt);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+#stage{position:fixed;inset:0}canvas.webgl{display:block;width:100%;height:100%;touch-action:none;outline:none}
+#loading{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 35%,#16394b,#06131f 68%);z-index:50;transition:opacity .5s}
+#loading .loadbox{width:min(520px,88vw);padding:28px;border:1px solid var(--line);border-radius:20px;background:rgba(7,21,34,.85);box-shadow:0 24px 80px #0008;text-align:center}
+#loading h1{margin:0 0 8px;font-size:clamp(20px,4vw,30px)}#loading p{margin:8px 0;color:var(--muted);line-height:1.5}#loadbar{height:5px;background:#18364a;border-radius:8px;overflow:hidden;margin-top:18px}#loadbar i{display:block;height:100%;width:15%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:8px;transition:width .3s}
+#topbar{position:fixed;z-index:8;left:14px;right:14px;top:12px;display:flex;align-items:center;gap:12px;pointer-events:none}
+.brand{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);backdrop-filter:blur(14px);box-shadow:0 8px 26px #0003;max-width:340px}
+.brandmark{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,#61d7df,#1a6c9c);display:grid;place-items:center;color:#06202b;font-weight:900;font-size:17px;box-shadow:inset 0 1px 3px #fff8}
+.brand strong{display:block;font-size:13px;letter-spacing:.04em}.brand small{display:block;color:var(--muted);font-size:10px;margin-top:2px;letter-spacing:.08em;text-transform:uppercase}
+#stepPill{pointer-events:auto;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(12px);border-radius:99px;padding:10px 14px;color:#d9f1f7;font-size:12px;box-shadow:0 8px 26px #0003}
+#topActions{margin-left:auto;display:flex;gap:7px;pointer-events:auto}
+button,.btn{font:inherit;color:var(--txt);border:1px solid rgba(153,209,225,.25);background:rgba(13,38,55,.93);padding:9px 12px;border-radius:11px;cursor:pointer;transition:background .15s,border .15s,transform .15s}
+button:hover{background:#16445c;border-color:#66d9e4}button:active{transform:translateY(1px)}button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+button.primary{background:linear-gradient(135deg,#157a9c,#14618b);border-color:#56c8d4;font-weight:700}button.gold{background:linear-gradient(135deg,#8e5d23,#62401d);border-color:#dca958}button.small{padding:7px 10px;font-size:11px}
+#leftPanel,#rightPanel{position:fixed;z-index:7;top:76px;bottom:16px;width:300px;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+#leftPanel{left:14px}#rightPanel{right:14px;width:318px}
+.glass{pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(16px);border-radius:17px;box-shadow:0 16px 40px #0004;overflow:hidden}
+.sectionHead{padding:13px 15px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sectionHead h2{margin:0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#c8e9f0}.eyebrow{font-size:10px;color:var(--cyan);letter-spacing:.14em;text-transform:uppercase}
+#journey{padding:10px;overflow:auto;flex:1;min-height:180px}
+.step{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:10px;border-radius:12px;border:1px solid transparent;cursor:pointer;transition:.15s;margin-bottom:4px}
+.step:hover{background:#102d42}.step.active{background:linear-gradient(90deg,#153e54,#102a3c);border-color:#327f96}.step.done .num{background:#1e6c63;color:#d9fff2}
+.num{width:26px;height:26px;border-radius:9px;background:#203b50;color:#a9d3df;display:grid;place-items:center;font-size:11px;font-weight:800}
+.step strong{display:block;font-size:12px;margin:1px 0 4px}.step span{display:block;color:var(--muted);font-size:10px;line-height:1.4}
+#lessonCard{padding:14px;min-height:142px}.cardTitle{font-size:10px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px}.cardText{font-size:12px;line-height:1.5;color:#c9dce3}.formula{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#f6d38d;background:#172c3c;border:1px solid #445164;border-radius:9px;padding:8px 9px;margin-top:9px;font-size:12px}
+#lessonNav{display:flex;gap:7px;margin-top:auto}#lessonNav button{flex:1}
+#metrics{padding:0}.metricGrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}.metric{background:rgba(7,23,36,.96);padding:12px 13px;min-width:0}.metric label{display:block;color:var(--muted);font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}.metric b{font-size:17px;font-weight:750;letter-spacing:-.03em;white-space:nowrap}.metric small{display:block;color:#82a9b8;font-size:9px;margin-top:3px}.accent{color:var(--cyan)}.goldtxt{color:var(--gold)}
+#controls{padding:13px 14px}.controlRow{margin-bottom:11px}.controlRow:last-child{margin-bottom:0}.controlLabel{display:flex;justify-content:space-between;align-items:center;color:#d6e9ed;font-size:11px;margin-bottom:5px}.controlLabel output{font-family:ui-monospace,monospace;color:var(--cyan);font-weight:700}input[type=range]{width:100%;accent-color:#4ccad8;cursor:pointer}.hint{font-size:9px;line-height:1.45;color:#789baa;margin-top:4px}.toggleRow{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#d1e5eb;padding:8px 0;border-top:1px solid #254153}.switch{width:38px;height:21px;border-radius:99px;background:#2c4656;position:relative;border:1px solid #547080;cursor:pointer}.switch:after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#b2c9d2;transition:.2s}.switch.on{background:#146b77;border-color:#50bfca}.switch.on:after{left:19px;background:#d8ffff}
+#chartBox{padding:10px 12px 11px}#chartHead{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#c7e2e9;margin-bottom:4px}#powerChart{width:100%;height:80px;display:block}#chartLegend{font-size:9px;color:#7f9eac;display:flex;justify-content:space-between}
+#bottomHelp{position:fixed;z-index:6;left:50%;bottom:14px;transform:translateX(-50%);max-width:min(720px,calc(100vw - 40px));padding:8px 14px;border-radius:99px;background:rgba(5,19,30,.8);border:1px solid rgba(120,190,210,.18);color:#c1dce4;font-size:10px;text-align:center;pointer-events:none;backdrop-filter:blur(8px)}
+#caption{position:fixed;z-index:9;left:50%;bottom:58px;transform:translateX(-50%);max-width:min(720px,85vw);padding:9px 15px;border-radius:12px;background:#061521e8;border:1px solid #4b8596;color:#f4fbfd;font-size:12px;line-height:1.45;text-align:center;display:none}
+#debug{position:fixed;z-index:20;top:70px;right:14px;background:#020a10dd;border:1px solid #54d9dc;border-radius:8px;padding:8px 10px;font:11px ui-monospace,monospace;color:#a9f8eb;display:none;pointer-events:none}
+#toast{position:fixed;z-index:30;left:50%;top:76px;transform:translate(-50%,-8px);opacity:0;pointer-events:none;padding:10px 14px;border-radius:11px;background:#153c4c;border:1px solid #59b8c6;color:#effdff;font-size:12px;transition:.22s;max-width:90vw;text-align:center}#toast.show{opacity:1;transform:translate(-50%,0)}
+#modal{position:fixed;z-index:40;inset:0;background:#020b12c9;backdrop-filter:blur(12px);display:none;place-items:center;padding:18px}#modal.show{display:grid}.modalCard{width:min(760px,96vw);max-height:88vh;overflow:auto;background:linear-gradient(145deg,#0e2a3b,#081a29);border:1px solid #42778a;border-radius:20px;box-shadow:0 28px 90px #0009;padding:22px}.modalHead{display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line);padding-bottom:13px;margin-bottom:15px}.modalHead h2{font-size:19px;margin:0}.modalBody{color:#d3e6eb;font-size:13px;line-height:1.6}.sourceList a{color:#8fe5f1;overflow-wrap:anywhere}.quizQ{padding:14px;background:#0b2030;border:1px solid #2d5266;border-radius:14px;margin:10px 0}.quizQ h3{font-size:14px;margin:0 0 11px}.option{display:flex;gap:9px;align-items:flex-start;padding:9px;border:1px solid #294b60;border-radius:10px;margin:6px 0;cursor:pointer;font-size:12px}.option:hover{background:#15384c}.option input{accent-color:#5ad2db;margin-top:2px}.feedback{margin-top:9px;padding:10px;border-radius:10px;background:#102c39;color:#aee6cf;border-left:3px solid #5ec899;font-size:11px}.feedback.wrong{color:#ffd0b8;border-left-color:#e89b69}.quizFoot{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:16px}.quizProgress{font-size:11px;color:var(--muted)}
+#mobileTip{display:none}
+body.in-vr #topbar,body.in-vr #leftPanel,body.in-vr #rightPanel,body.in-vr #bottomHelp,body.in-vr #caption{display:none!important}
+#topActions #btnVR{position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;margin:0!important;font:inherit!important}
+@media(max-width:900px){#leftPanel{width:255px}#rightPanel{width:280px}.brand{padding:8px 10px}.brand small{display:none}#stepPill{display:none}}
+@media(max-width:650px){#topbar{left:8px;right:8px;top:8px;gap:6px}.brand{max-width:185px;padding:7px 9px}.brand strong{font-size:10px}.brandmark{width:27px;height:27px;font-size:13px}.topbtn{font-size:10px;padding:8px 9px}#topActions{gap:4px}#leftPanel{top:auto;left:8px;right:8px;bottom:8px;width:auto;max-height:34vh;gap:6px}#journey{display:flex;overflow-x:auto;gap:5px;min-height:0;padding:7px}.step{min-width:144px;grid-template-columns:25px 1fr;padding:7px;margin:0}.step span{display:none}.step strong{font-size:10px}#lessonCard{display:none}#lessonNav{display:none}#rightPanel{top:58px;right:8px;bottom:auto;width:min(190px,48vw);gap:6px}#metrics .sectionHead{padding:7px 9px}#metrics .sectionHead h2{font-size:9px}.metricGrid{grid-template-columns:1fr 1fr}.metric{padding:7px 8px}.metric label{font-size:8px}.metric b{font-size:12px}.metric small{display:none}#controls{padding:8px 9px}#controls .controlRow{margin-bottom:6px}#controls .controlLabel{font-size:9px}#controls .hint,#controls .toggleRow{display:none}#chartBox{display:none}#bottomHelp{display:none}#caption{bottom:38vh;font-size:10px}#mobileTip{display:block}}
+@media(max-width:390px){#rightPanel{width:158px}.metric b{font-size:11px}.topbtn.optional{display:none}}
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="stage"></div>
+<div id="loading"><div class="loadbox"><div class="brandmark" style="margin:0 auto 14px;width:48px;height:48px;font-size:22px">⚡</div><h1>Laboratório Hidrelétrico</h1><p>Preparando a barragem, a turbina Francis e o gerador.<br>Construindo a experiência 3D interativa…</p><div id="loadbar"><i></i></div><p id="loadstatus" style="font-size:10px">Carregando motor gráfico…</p></div></div>
+<header id="topbar">
+  <div class="brand"><div class="brandmark">⚡</div><div><strong>LABORATÓRIO HIDRELÉTRICO</strong><small>Transformação e conservação da energia</small></div></div>
+  <div id="stepPill">ETAPA 1 / 6 · VISÃO GERAL</div>
+  <div id="topActions">
+    <button class="topbtn optional" id="btnXray" title="Alternar visão de raios-X">◉ Raios-X</button>
+    <button class="topbtn optional" id="btnNarrate" title="Ler explicação em voz alta">🔊 Narrar</button>
+    <button class="topbtn optional" id="btnMute" title="Silenciar narração">♪ Mudo</button>
+    <button class="topbtn optional" id="btnCredits">Fontes</button>
+    <button class="topbtn primary" id="btnVR">Entrar em VR</button>
+  </div>
+</header>
+<aside id="leftPanel">
+  <section class="glass" style="display:flex;flex-direction:column;flex:1;min-height:0">
+    <div class="sectionHead"><div><div class="eyebrow">Trilha imersiva · 40 min</div><h2>Roteiro de exploração</h2></div><span style="font-size:10px;color:var(--muted)" id="progressText">0/6</span></div>
+    <div id="journey"></div>
+  </section>
+  <section class="glass" id="lessonCard">
+    <div class="cardTitle" id="lessonKicker">MISSÃO 01 · OBSERVAR</div>
+    <div class="cardText" id="lessonText">Observe o reservatório e identifique a diferença de altura entre a água represada e o nível de jusante. Essa altura representa a queda hidráulica disponível.</div>
+    <div class="formula" id="lessonFormula">Eₚ = m · g · h</div>
+  </section>
+  <div id="lessonNav"><button id="btnPrev" class="small">← Anterior</button><button id="btnNext" class="primary">Próxima etapa →</button></div>
+</aside>
+<aside id="rightPanel">
+  <section class="glass" id="metrics">
+    <div class="sectionHead"><div><div class="eyebrow">Telemetria calculada</div><h2>Unidade geradora 01</h2></div><span style="font-size:9px;color:var(--green)">● AO VIVO</span></div>
+    <div class="metricGrid">
+      <div class="metric"><label>Vazão Q</label><b id="mFlow" class="accent">0,0 m³/s</b><small>Volume por segundo</small></div>
+      <div class="metric"><label>Velocidade no duto</label><b id="mVelocity">0,0 m/s</b><small>v = Q / A</small></div>
+      <div class="metric"><label>Potência hidráulica</label><b id="mHydro" class="goldtxt">0 MW</b><small>ρ · g · Q · H</small></div>
+      <div class="metric"><label>Potência elétrica</label><b id="mElectric" class="accent">0 MW</b><small>Após as perdas</small></div>
+      <div class="metric"><label>Rotação do eixo</label><b id="mRPM">0 rpm</b><small id="rpmMode">Condição de operação</small></div>
+      <div class="metric"><label>Energia acumulada</label><b id="mEnergy" class="goldtxt">0 J</b><small id="mTime">t = 0 s</small></div>
+    </div>
+  </section>
+  <section class="glass" id="controls">
+    <div class="sectionHead" style="padding:0 0 9px;border:0"><div><div class="eyebrow">Operação da comporta</div><h2 style="margin:0;font-size:12px">Controle hidráulico</h2></div><span style="font-size:10px;color:var(--cyan)" id="gatePct">0%</span></div>
+    <div class="controlRow"><div class="controlLabel"><span>Abertura da comporta</span><output id="gateOut">0%</output></div><input id="gateSlider" type="range" min="0" max="100" value="0" step="1" aria-label="Abertura da comporta"></div>
+    <div class="controlRow"><div class="controlLabel"><span>Volume de água hipotético</span><output id="volumeOut">25.000 m³</output></div><input id="volumeSlider" type="range" min="1000" max="100000" value="25000" step="1000" aria-label="Volume hipotético"></div>
+    <div class="toggleRow"><span>Gerador sincronizado à rede (60 Hz)</span><div class="switch on" id="gridSwitch" role="switch" aria-checked="true" tabindex="0"></div></div>
+    <div class="hint">Na rede, a frequência fixa a rotação síncrona; a vazão altera principalmente o torque e a potência. O modo isolado usa uma aproximação didática de aceleração.</div>
+    <div style="display:flex;gap:7px;margin-top:9px"><button id="btnGateOpen" class="small" style="flex:1">Abrir +10%</button><button id="btnGateClose" class="small" style="flex:1">Fechar −10%</button><button id="btnResetEnergy" class="small" title="Zerar energia acumulada">↺</button></div>
+  </section>
+  <section class="glass" id="chartBox"><div id="chartHead"><span>POTÊNCIA ELÉTRICA · TEMPO</span><span id="chartNow" style="color:var(--cyan)">0 MW</span></div><canvas id="powerChart" width="560" height="150"></canvas><div id="chartLegend"><span>Histórico da simulação</span><span>Atualização em tempo real</span></div></section>
+</aside>
+<div id="bottomHelp">Desktop: WASD move · mouse olha · clique e arraste a alavanca · Espaço pausa · C alterna sentado/em pé · Tablet: arraste para olhar e use os controles</div>
+<div id="caption" aria-live="polite"></div>
+<div id="debug"></div><div id="toast"></div>
+<div id="modal"><div class="modalCard"><div class="modalHead"><h2 id="modalTitle">Créditos e fontes</h2><button id="modalClose" aria-label="Fechar">✕</button></div><div class="modalBody" id="modalBody"></div></div></div>
+<script type="module">
+import * as THREE from 'three';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const $ = (id)=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=(v,d=1)=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtSI=(v,unit='J')=>{if(!Number.isFinite(v)||v<=0)return `0 ${unit}`;const p=[['G',1e9],['M',1e6],['k',1e3]];for(const [s,n] of p)if(v>=n)return `${fmt(v/n,2)} ${s}${unit}`;return `${fmt(v,0)} ${unit}`;};
+const showToast=(s)=>{const el=$('toast');el.textContent=s;el.classList.add('show');clearTimeout(showToast.t);showToast.t=setTimeout(()=>el.classList.remove('show'),2600);};
+
+const steps=[
+ {title:'Reservatório e energia potencial',short:'Altura e energia potencial',kicker:'MISSÃO 01 · OBSERVAR',text:'Você está diante do reservatório. A água armazenada em uma cota elevada possui energia potencial gravitacional em relação ao nível de jusante. Compare a altura disponível (queda H) e pense: o que muda quando o nível do reservatório sobe?',formula:'Eₚ = m · g · h  |  Pₕ = ρ · g · Q · H',target:[0,0,-17],look:[0,9,-40],caption:'A altura H representa a diferença vertical entre montante e jusante. A água armazenada tem energia potencial gravitacional.'},
+ {title:'Vertedouro e comporta',short:'Controle da água',kicker:'MISSÃO 02 · CONTROLAR',text:'O vertedouro libera água excedente; já a comporta da tomada d’água regula a admissão para a unidade geradora. Acione a alavanca ou o controle deslizante: a área aberta altera a vazão Q. Atenção: vazão (m³/s) não é velocidade (m/s).',formula:'Q = Cᵈ · A · √(2 · g · H)',target:[-14,0,-8],look:[-11,3,-5],caption:'Abertura maior → área hidráulica maior → maior vazão, para a mesma carga hidráulica.'},
+ {title:'Conduto forçado e movimento',short:'Velocidade da água',kicker:'MISSÃO 03 · MEDIR',text:'A água percorre o conduto forçado sob pressão. Observe as partículas azuis. A velocidade média no duto é calculada por v = Q/A. A energia potencial gravitacional é convertida em energia cinética e de pressão; em uma instalação real, há perdas por atrito e turbulência.',formula:'v = Q / A  |  E꜀ = ½ · m · v²',target:[-5,0,2],look:[0,5,0],caption:'A velocidade média no conduto é a vazão volumétrica dividida pela área de seção transversal.'},
+ {title:'Turbina Francis e eixo',short:'Rotação mecânica',kicker:'MISSÃO 04 · INVESTIGAR',text:'A água chega à caixa espiral, passa pelas palhetas diretrizes e incide nas pás curvas do rotor Francis. A força hidráulica produz torque e faz o conjunto girar. O eixo transmite energia mecânica ao gerador. Ative Raios-X para enxergar as partes internas.',formula:'Pₘ = ηₜ · Pₕ  |  τ = Pₘ / ω',target:[0,0,5],look:[0,4,1],caption:'A turbina transforma a energia do escoamento em energia mecânica de rotação.'},
+ {title:'Gerador e indução eletromagnética',short:'Campo magnético e corrente',kicker:'MISSÃO 05 · EXPLICAR',text:'O eixo movimenta os polos eletromagnéticos do rotor em relação às bobinas do estator. A variação do fluxo magnético induz uma tensão elétrica (Lei de Faraday). O gerador converte energia mecânica em energia elétrica. Os polos coloridos representam eletroímãs alimentados pelo sistema de excitação, não ímãs permanentes. Os valores de bobina e campo são parâmetros didáticos simplificados.',formula:'ε = −N · ΔΦ/Δt  |  εᵣₘₛ ≈ N · B · A · ω / √2',target:[0,7.05,9],look:[0,8,4],caption:'A rotação relativa entre campo magnético e bobinas varia o fluxo magnético e induz tensão elétrica.'},
+ {title:'Conservação e balanço de energia',short:'Síntese das transformações',kicker:'MISSÃO 06 · CONECTAR',text:'Reconstrua a cadeia: energia potencial gravitacional → energia cinética/pressão da água → energia mecânica de rotação → energia elétrica. A energia não é criada: parte é dissipada em calor, ruído, turbulência e perdas elétricas. Compare potência hidráulica, mecânica e elétrica.',formula:'Pₑ = ηg · ηt · ρ · g · Q · H  |  Eₑ = ∫ Pₑ dt',target:[8,0,13],look:[0,5,2],caption:'Conservação: a energia útil na saída é menor que a energia hidráulica disponível por causa das perdas.'}
+];
+let currentStep=0, completed=new Set(), gate=0, volume=25000, gridConnected=true, xray=false, seated=false, muted=false, narrationOn=false, simTime=0, electricEnergy=0, paused=false;
+const PHYS={rho:1000,g:9.81,H:70,Cd:.90,Amax:3.2,Apipe:8.0,etaT:.90,etaG:.96,f:60,poles:78,B:.80,turns:360,coilA:2.5};
+let data={Q:0,v:0,vIdeal:0,Ph:0,Pm:0,Pe:0,rpm:0,omega:0,torque:0,voltage:0,current:0,Ep:0,Ec:0,mass:0,loss:0};
+const history=Array(90).fill(0);let historyClock=0;
+
+let scene,camera,renderer,playerRig,clock,pmrem;
+let turbineRotor,shaft,genRotor,gateLever,gatePivot,gateHit,gateIndicator,penstockWater,flowPoints,spillPoints,buildingWalls=[],xrayParts=[],waterMaterial,vrPanel,vrPanelTexture,vrPanelCanvas,vrPanelCtx,vrScreen,vrPanelVisible=true,vignetteMaterial;
+let raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2(),keys={},dragState=null,lookState=null,vrGrab=null,controllers=[],controllerLines=[],axisLatch={x:false,y:false,turn:false};
+let fpsFrames=0,fpsLast=performance.now(),fps=0,lastPanelDraw=0,uiClock=0,vrPanelPage='main',vrPanelReturnPage='main',vrQuizIndex=0,vrQuizScore=0,vrQuizAnswered=false,vrQuizResult=false;
+const debugMode=new URLSearchParams(location.search).get('debug')==='1';
+
+function canvasTexture(draw,w=512,h=512){const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');draw(ctx,w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t;}
+function proceduralConcrete(){return canvasTexture((c,w,h)=>{const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,'#929a99');g.addColorStop(.5,'#737d7e');g.addColorStop(1,'#a5aaa4');c.fillStyle=g;c.fillRect(0,0,w,h);for(let i=0;i<22000;i++){const x=Math.random()*w,y=Math.random()*h,a=Math.random()*.12;c.fillStyle=Math.random()>.5?`rgba(20,30,34,${a})`:`rgba(245,245,230,${a})`;c.fillRect(x,y,1+Math.random()*2,1+Math.random()*2);}c.strokeStyle='rgba(35,48,52,.18)';c.lineWidth=2;for(let i=0;i<8;i++){const x=i*w/8;c.beginPath();c.moveTo(x,0);c.lineTo(x+Math.random()*12,h);c.stroke();}for(let i=0;i<14;i++){const x=Math.random()*w,y=Math.random()*h;c.strokeStyle='rgba(30,40,42,.22)';c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.random()*20-10,y+20+Math.random()*50);c.stroke();}},512,512);}
+function proceduralWater(){return canvasTexture((c,w,h)=>{const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,'#0a7190');g.addColorStop(.35,'#26a9bd');g.addColorStop(.7,'#126b8d');g.addColorStop(1,'#08445f');c.fillStyle=g;c.fillRect(0,0,w,h);for(let i=0;i<2400;i++){const x=Math.random()*w,y=Math.random()*h,len=3+Math.random()*35;c.strokeStyle=`rgba(190,246,247,${Math.random()*.16})`;c.lineWidth=.5+Math.random()*1.3;c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+len*.5,y-2,x+len,y+Math.random()*2);c.stroke();}},512,512);}
+function proceduralGround(){return canvasTexture((c,w,h)=>{const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,'#65734b');g.addColorStop(.45,'#4d6744');g.addColorStop(1,'#7c704c');c.fillStyle=g;c.fillRect(0,0,w,h);for(let i=0;i<18000;i++){const x=Math.random()*w,y=Math.random()*h;c.fillStyle=Math.random()>.6?'rgba(28,49,30,.18)':'rgba(222,192,118,.11)';c.fillRect(x,y,1+Math.random()*4,1+Math.random()*2);}for(let i=0;i<90;i++){c.strokeStyle='rgba(34,48,31,.13)';c.lineWidth=1+Math.random()*2;c.beginPath();let x=Math.random()*w,y=Math.random()*h;c.moveTo(x,y);c.lineTo(x+Math.random()*30,y+Math.random()*30);c.stroke();}},512,512);}
+const concreteTex=proceduralConcrete(),waterTex=proceduralWater(),groundTex=proceduralGround();
+concreteTex.repeat.set(3,2);waterTex.repeat.set(8,4);groundTex.repeat.set(8,8);
+
+function mat(color,roughness=.65,metalness=0,extra={}){return new THREE.MeshStandardMaterial({color,roughness,metalness,...extra});}
+const M={concrete:new THREE.MeshStandardMaterial({color:0xb5b9b2,map:concreteTex,roughness:.91}),darkConcrete:new THREE.MeshStandardMaterial({color:0x777f80,map:concreteTex,roughness:.92}),steel:mat(0x718895,.32,.82),darkSteel:mat(0x243744,.42,.75),copper:mat(0xb56e42,.31,.78),gold:mat(0xd4ad62,.35,.7),water:new THREE.MeshPhysicalMaterial({color:0x138eac,map:waterTex,roughness:.18,metalness:.12,transparent:true,opacity:.83,clearcoat:.8,clearcoatRoughness:.13,side:THREE.DoubleSide}),foam:new THREE.MeshBasicMaterial({color:0xd8fbff,transparent:true,opacity:.7}),red:mat(0xd94b42,.35,.35),blue:mat(0x2576d5,.32,.55),green:mat(0x476e45,.9),black:mat(0x101a21,.52,.35),glass:new THREE.MeshPhysicalMaterial({color:0x6dc5d7,roughness:.12,metalness:.12,transparent:true,opacity:.17,transmission:.18,thickness:.35,side:THREE.DoubleSide}),yellow:mat(0xf0bb53,.4,.35)};
+
+function addMesh(parent,geo,material,pos=[0,0,0],rot=[0,0,0],scale=null){const o=new THREE.Mesh(geo,material);o.position.set(...pos);o.rotation.set(...rot);if(scale)o.scale.set(...scale);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
+function addBox(parent,w,h,d,material,pos,rot=[0,0,0],bevel=0){let geo=new THREE.BoxGeometry(w,h,d);const o=addMesh(parent,geo,material,pos,rot);return o;}
+function addTube(parent,points,radius,material,segments=80){const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));const mesh=addMesh(parent,new THREE.TubeGeometry(curve,segments,radius,12,false),material);return {mesh,curve};}
+function makeLabel(text,pos,opts={}){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.fillStyle='rgba(5,19,29,.88)';x.strokeStyle=opts.color||'#59d2df';x.lineWidth=5;roundRect(x,4,4,504,120,18);x.fill();x.stroke();x.fillStyle='#f2fbff';x.font='700 34px Arial';x.textAlign='center';x.textBaseline='middle';x.fillText(text,256,64,470);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false}));s.position.set(...pos);s.scale.set(opts.w||4.4,opts.h||1.1,1);scene.add(s);return s;}
+function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function canvasWrap(c,text,x,y,maxWidth,lineHeight,maxLines=2){const words=String(text).split(/\s+/);let line='',lines=0;for(const word of words){const test=line?line+' '+word:word;if(c.measureText(test).width>maxWidth&&line){c.fillText(line,x,y+lines*lineHeight);lines++;line=word;if(lines>=maxLines)break;}else line=test;}if(lines<maxLines&&line)c.fillText(line,x,y+lines*lineHeight);}
+function addIsland(x,z,sx,sz,seed=1){const grp=new THREE.Group();const points=[];for(let i=0;i<14;i++){const a=i/14*Math.PI*2;const r=.78+(.15*Math.sin(i*seed*1.7))+.08*Math.cos(i*3.2+seed);points.push(new THREE.Vector2(Math.cos(a)*sx*r,Math.sin(a)*sz*r));}const shape=new THREE.Shape(points);const geo=new THREE.ExtrudeGeometry(shape,{depth:.8,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.3,bevelThickness:.2});geo.rotateX(-Math.PI/2);const land=addMesh(grp,geo,M.green,[0,13.8,0]);land.material=mat(0x4f6542,.95);grp.position.set(x,0,z);scene.add(grp);const treeCount=9;const trunkInst=new THREE.InstancedMesh(new THREE.CylinderGeometry(.08,.14,.65,7),mat(0x584533,.9),treeCount);const crownInst=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.62,1),mat(0x315c3c,.95),treeCount);const dummy=new THREE.Object3D();for(let i=0;i<treeCount;i++){const px=(Math.random()-.5)*sx*1.35,pz=(Math.random()-.5)*sz*1.35;dummy.position.set(px,14.45,pz);dummy.rotation.set(0,Math.random()*6.28,0);dummy.scale.set(1,1,1);dummy.updateMatrix();trunkInst.setMatrixAt(i,dummy.matrix);dummy.position.set(px,15.0,pz);const sc=.72+Math.random()*.5;dummy.scale.set(sc,sc*1.1,sc);dummy.updateMatrix();crownInst.setMatrixAt(i,dummy.matrix);}trunkInst.instanceMatrix.needsUpdate=true;crownInst.instanceMatrix.needsUpdate=true;trunkInst.castShadow=true;crownInst.castShadow=true;grp.add(trunkInst,crownInst);return grp;}
+
+function buildEnvironment(){
+  scene.background=new THREE.Color(0x9ebfc8);scene.fog=new THREE.FogExp2(0x9ebfc8,.0037);
+  const hemi=new THREE.HemisphereLight(0xe8f8ff,0x4a584d,1.35);scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xfff1d6,2.2);sun.position.set(-38,55,-24);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-.00022;sun.shadow.normalBias=.035;scene.add(sun);
+  const floor=addMesh(scene,new THREE.PlaneGeometry(180,180),new THREE.MeshStandardMaterial({color:0x8e987e,map:groundTex,roughness:1}),[0,-.9,0],[-Math.PI/2,0,0]);floor.receiveShadow=true;
+  // Reservatório e ilhas: leitura paisagística inspirada na referência aérea enviada.
+  const reservoir=addMesh(scene,new THREE.PlaneGeometry(190,82),M.water,[0,14.2,-76],[-Math.PI/2,0,0]);reservoir.receiveShadow=false;
+  const shore=addMesh(scene,new THREE.PlaneGeometry(190,90),new THREE.MeshStandardMaterial({color:0x526b51,map:groundTex,roughness:1}),[0,-.35,-74],[-Math.PI/2,0,0]);
+  addIsland(-28,-67,12,3.5,2);addIsland(9,-85,17,3.1,3);addIsland(42,-61,10,3.2,4);addIsland(-52,-93,11,2.5,5);addIsland(64,-101,9,2.4,7);
+  const tail=addMesh(scene,new THREE.PlaneGeometry(65,95),M.water,[0,-1.9,39],[-Math.PI/2,0,0]);
+  // Margens rochosas procedurais.
+  const rockGeo=new THREE.DodecahedronGeometry(1,0),rockInst=new THREE.InstancedMesh(rockGeo,mat(0x52604b,.98),25),rockDummy=new THREE.Object3D();for(let i=0;i<25;i++){const x=-31+i*2.6,z=13+Math.sin(i*.47)*4,sc=.8+Math.random()*1.5;rockDummy.position.set(x,-.35,z);rockDummy.rotation.set(Math.random(),Math.random(),Math.random());rockDummy.scale.set(sc*1.8,sc*.5,sc*1.15);rockDummy.updateMatrix();rockInst.setMatrixAt(i,rockDummy.matrix);}rockInst.instanceMatrix.needsUpdate=true;rockInst.castShadow=true;scene.add(rockInst);
+  // Estrutura principal da barragem em arco no plano horizontal.
+  const damOuter=addMesh(scene,new THREE.CylinderGeometry(32,32,15,72,2,true,Math.PI*1.16,Math.PI*.68),M.concrete,[0,7.5,0]);damOuter.castShadow=true;
+  const damInner=addMesh(scene,new THREE.CylinderGeometry(28.8,28.8,15,72,2,true,Math.PI*1.16,Math.PI*.68),M.darkConcrete,[0,7.5,0]);damInner.material.side=THREE.BackSide;
+  // Coroamento espesso e caminho de inspeção.
+  addMesh(scene,new THREE.TorusGeometry(30.4,.55,8,100,Math.PI*.68),M.concrete,[0,15,0],[Math.PI/2,0,Math.PI*1.16]);
+  // Pilares e comportas ao longo do arco.
+  const damPiers=new THREE.InstancedMesh(new THREE.BoxGeometry(1.3,15,2.2),M.concrete,11),gateLeaves=new THREE.InstancedMesh(new THREE.BoxGeometry(.74,7.6,.55),M.darkSteel,11),pierCaps=new THREE.InstancedMesh(new THREE.BoxGeometry(.9,.28,1),M.yellow,11),dummyPier=new THREE.Object3D();for(let i=0;i<=10;i++){const a=Math.PI*1.16+i/10*Math.PI*.68;const x=30*Math.cos(a),z=30*Math.sin(a);dummyPier.position.set(x,7.5,z);dummyPier.rotation.set(0,-a,0);dummyPier.updateMatrix();damPiers.setMatrixAt(i,dummyPier.matrix);dummyPier.position.set(x,4.2,z+Math.sign(z)*.9);dummyPier.updateMatrix();gateLeaves.setMatrixAt(i,dummyPier.matrix);dummyPier.position.set(x,8.1,z+Math.sign(z)*.95);dummyPier.updateMatrix();pierCaps.setMatrixAt(i,dummyPier.matrix);}damPiers.instanceMatrix.needsUpdate=true;gateLeaves.instanceMatrix.needsUpdate=true;pierCaps.instanceMatrix.needsUpdate=true;damPiers.castShadow=true;damPiers.receiveShadow=true;scene.add(damPiers,gateLeaves,pierCaps);
+  // Vertedouro lateral com calha inclinada e dissipador.
+  const spillRamp=addMesh(scene,new THREE.BoxGeometry(13,1.15,34),M.darkConcrete,[-15,5.3,-7],[.23,0,0]);
+  const spillWater=addMesh(scene,new THREE.PlaneGeometry(10.5,33),new THREE.MeshPhysicalMaterial({color:0x74dce8,roughness:.16,transparent:true,opacity:.68,side:THREE.DoubleSide}),[-15,5.98,-6],[.23,0,0]);
+  const spillPiers=new THREE.InstancedMesh(new THREE.BoxGeometry(.25,.42,2.5),M.concrete,9),spillDummy=new THREE.Object3D();for(let i=0;i<9;i++){const z=-20+i*3.2;spillDummy.position.set(-21,5.1,z);spillDummy.updateMatrix();spillPiers.setMatrixAt(i,spillDummy.matrix);}spillPiers.instanceMatrix.needsUpdate=true;scene.add(spillPiers);
+  // Canal de restituição e paredes de contenção.
+  addMesh(scene,new THREE.BoxGeometry(30,1,46),M.darkConcrete,[0,-2.85,28]);
+  addBox(scene,1.2,4,46,M.concrete,[-16,-.5,28]);addBox(scene,1.2,4,46,M.concrete,[16,-.5,28]);
+  // Casa de força em corte arquitetônico: piso, pilares, meias paredes e vigas.
+  addBox(scene,30,1,27,M.concrete,[0,-.45,5]);
+  const leftWall=addBox(scene,1,13,25,M.concrete,[-15,6,5]);const rightWall=addBox(scene,1,13,25,M.concrete,[15,6,5]);
+  const backWall=addBox(scene,30,13,1,M.concrete,[0,6,16]);const frontWall=addBox(scene,30,10,1,M.concrete,[0,5,-7]);
+  buildingWalls.push(leftWall,rightWall,backWall,frontWall);
+  for(const w of buildingWalls){w.material=new THREE.MeshStandardMaterial({color:0x7f989c,map:concreteTex,roughness:.85,transparent:true,opacity:.27,side:THREE.DoubleSide});w.material.depthWrite=false;}
+  // Colunas, vigas e passarelas industriais.
+  const colInst=new THREE.InstancedMesh(new THREE.BoxGeometry(.48,12,.48),M.darkSteel,12),capInst=new THREE.InstancedMesh(new THREE.BoxGeometry(1.1,.35,1.1),M.gold,12),colD=new THREE.Object3D();let ci=0;for(const x of [-13,-9,9,13]){for(const z of [-5,3,11]){colD.position.set(x,5.6,z);colD.updateMatrix();colInst.setMatrixAt(ci,colD.matrix);colD.position.set(x,11.9,z);colD.updateMatrix();capInst.setMatrixAt(ci,colD.matrix);ci++;}}colInst.instanceMatrix.needsUpdate=true;capInst.instanceMatrix.needsUpdate=true;scene.add(colInst,capInst);
+  for(const z of [-5,10])addBox(scene,27,.42,.5,M.steel,[0,11.8,z]);
+  addBox(scene,26,.35,2.2,M.darkSteel,[0,7.35,10]);
+  // passarela superior e guarda-corpos.
+  addBox(scene,12,.35,3,M.steel,[-8,2.8,7]);const railPosts=new THREE.InstancedMesh(new THREE.BoxGeometry(.1,1,.1),M.yellow,8),railD=new THREE.Object3D();for(let i=0;i<8;i++){railD.position.set(-13+i*1.4,3.45,8.4);railD.updateMatrix();railPosts.setMatrixAt(i,railD.matrix);}railPosts.instanceMatrix.needsUpdate=true;scene.add(railPosts);addBox(scene,12,.1,.1,M.yellow,[-8,3.95,8.4]);
+  // Escada técnica simplificada, com longarinas e degraus.
+  const stair=new THREE.Group();const stairSteps=new THREE.InstancedMesh(new THREE.BoxGeometry(2,.18,.58),M.steel,10),stairD=new THREE.Object3D();for(let i=0;i<10;i++){stairD.position.set(0,i*.32,i*.48);stairD.updateMatrix();stairSteps.setMatrixAt(i,stairD.matrix);}stairSteps.instanceMatrix.needsUpdate=true;stair.add(stairSteps);addBox(stair,.18,3.5,5.0,M.darkSteel,[-.9,1.5,2.2],[.32,0,0]);addBox(stair,.18,3.5,5.0,M.darkSteel,[.9,1.5,2.2],[.32,0,0]);stair.position.set(10,.0,1);scene.add(stair);
+  // Tomada d'água e grade de proteção na barragem.
+  addBox(scene,7,4,2.5,M.darkSteel,[0,12.4,-26]);const intakeBars=new THREE.InstancedMesh(new THREE.BoxGeometry(.08,4.3,.08),M.steel,18),intakeD=new THREE.Object3D();for(let i=0;i<18;i++){intakeD.position.set(-3.4+i*.4,12.4,-24.7);intakeD.updateMatrix();intakeBars.setMatrixAt(i,intakeD.matrix);}intakeBars.instanceMatrix.needsUpdate=true;scene.add(intakeBars);
+  // Ilhas de manutenção e iluminação industrial.
+  const lampPoles=new THREE.InstancedMesh(new THREE.CylinderGeometry(.08,.12,4,8),M.darkSteel,2),lampHeads=new THREE.InstancedMesh(new THREE.SphereGeometry(.32,12,8),mat(0xf5d58e,.2,.1,{emissive:0xffc56a,emissiveIntensity:.6}),2),lampD=new THREE.Object3D();[-12,12].forEach((x,i)=>{lampD.position.set(x,5.8,13);lampD.updateMatrix();lampPoles.setMatrixAt(i,lampD.matrix);lampD.position.set(x,8,13);lampD.updateMatrix();lampHeads.setMatrixAt(i,lampD.matrix);});lampPoles.instanceMatrix.needsUpdate=true;lampHeads.instanceMatrix.needsUpdate=true;scene.add(lampPoles,lampHeads);
+}
+
+function buildHydraulicCircuit(){
+  // Conduto forçado: tubo curvo de grande diâmetro, com flanges e abraçadeiras.
+  const pts=[[0,13.7,-25],[0,13,-21],[0,11,-16],[0,8,-11],[0,5,-7],[0,3.7,-3],[0,3.2,-.2]];
+  const pipeCurve=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)));
+  const pipeOuter=addMesh(scene,new THREE.TubeGeometry(pipeCurve,80,1.85,24,false),M.darkSteel);const pipeInner=addMesh(scene,new THREE.TubeGeometry(pipeCurve,80,1.58,24,false),new THREE.MeshStandardMaterial({color:0x1e7793,roughness:.3,metalness:.25,transparent:true,opacity:.7,side:THREE.BackSide}));
+  for(let t=.18;t<.96;t+=.18){const p=pipeCurve.getPoint(t),q=pipeCurve.getTangent(t);const ring=addMesh(scene,new THREE.TorusGeometry(1.88,.12,8,32),M.gold,p.toArray());ring.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),q);}
+  penstockWater=addMesh(scene,new THREE.TubeGeometry(pipeCurve,80,1.48,20,false),new THREE.MeshPhysicalMaterial({color:0x16a5c5,roughness:.12,transparent:true,opacity:.42,side:THREE.DoubleSide}));
+  // Válvula principal e alavanca de controle mecânica.
+  const valve=new THREE.Group();valve.position.set(-11,1.1,-5);scene.add(valve);addMesh(valve,new THREE.TorusGeometry(.85,.18,12,36),M.steel,[0,0,0],[Math.PI/2,0,0]);addMesh(valve,new THREE.CylinderGeometry(.17,.17,1.0,16),M.darkSteel,[0,.55,0]);
+  gatePivot=new THREE.Group();gatePivot.position.set(0,1.05,0);valve.add(gatePivot);addMesh(gatePivot,new THREE.CylinderGeometry(.11,.16,1.7,12),M.gold,[0,.85,0],[0,0,-.3]);gateLever=addMesh(gatePivot,new THREE.SphereGeometry(.24,16,12),M.red,[0,1.7,0],[],[1.3,.7,1.1]);gateHit=addMesh(gatePivot,new THREE.CapsuleGeometry(.28,.8,4,8),new THREE.MeshBasicMaterial({color:0xffcc55,transparent:true,opacity:0.001}),[0,1.25,0],[0,0,-.3]);gateHit.userData.interactive='lever';gateIndicator=addMesh(valve,new THREE.TorusGeometry(1.05,.035,6,40),M.yellow,[0,.12,0],[Math.PI/2,0,0]);
+  addMesh(valve,new THREE.CylinderGeometry(.12,.12,.55,16),M.steel,[0,-.35,0]);makeLabel('TOMADA D’ÁGUA · COMPORTA',[-11,3.55,-5],{w:5.6,h:1.1});
+  // Caixa espiral em torno do rotor.
+  const spiralPoints=[];for(let i=0;i<=100;i++){const a=i/100*Math.PI*2;const r=2.25+.42*Math.sin(a*.5+Math.PI/2);spiralPoints.push([Math.cos(a)*r,2.5,Math.sin(a)*r]);}
+  addTube(scene,spiralPoints,0.48,new THREE.MeshStandardMaterial({color:0x3f8eaa,metalness:.5,roughness:.28,transparent:true,opacity:.65}),120);
+  // Corpo do tubo de sucção/difusor abaixo do rotor.
+  const draft=addMesh(scene,new THREE.CylinderGeometry(2.55,1.28,4.6,40,4,true),new THREE.MeshStandardMaterial({color:0x4b7e8b,metalness:.48,roughness:.32,transparent:true,opacity:.42,side:THREE.DoubleSide}),[0,-.8,1.0]);draft.material.depthWrite=false;
+  addMesh(scene,new THREE.TorusGeometry(1.35,.12,10,36),M.steel,[0,1.45,1.0]);addMesh(scene,new THREE.TorusGeometry(2.48,.12,10,36),M.steel,[0,-3.05,1.0]);
+  // Descarga à jusante.
+  const outCurve=new THREE.CatmullRomCurve3([new THREE.Vector3(0,-2.9,1),new THREE.Vector3(0,-2.7,5),new THREE.Vector3(0,-2.4,9),new THREE.Vector3(0,-2.1,14)]);
+  addMesh(scene,new THREE.TubeGeometry(outCurve,48,2.35,20,false),new THREE.MeshPhysicalMaterial({color:0x1688a7,transparent:true,opacity:.26,roughness:.18,side:THREE.DoubleSide}));
+  // Partículas que percorrem tomada → conduto → rotor → tubo de sucção.
+  const flowCurve=new THREE.CatmullRomCurve3([[0,13.5,-24],[0,12,-18],[0,8,-11],[0,4,-5],[0,2.8,-1],[1,1.7,1],[0,-.8,3],[0,-2.3,9]].map(p=>new THREE.Vector3(...p)));
+  flowPoints=makeFlowPoints(flowCurve,520,0x9cf5ff,.095);
+  const spillCurve=new THREE.CatmullRomCurve3([[-15,6,-22],[-15,4,-15],[-15,1,-7],[-15,-1,3],[-15,-1.8,12]].map(p=>new THREE.Vector3(...p)));
+  spillPoints=makeFlowPoints(spillCurve,180,0xe5fbff,.075);
+}
+function makeFlowPoints(curve,count,color,size){const positions=new Float32Array(count*3);const phases=new Float32Array(count);for(let i=0;i<count;i++){phases[i]=Math.random();const p=curve.getPointAt(phases[i]);positions[i*3]=p.x;positions[i*3+1]=p.y;positions[i*3+2]=p.z;}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));const obj=new THREE.Points(geo,new THREE.PointsMaterial({color,size,transparent:true,opacity:.8,depthWrite:false,sizeAttenuation:true}));obj.userData={curve,phases,count,baseSpeed:size};scene.add(obj);return obj;}
+
+function createBladeGeometry(index,total){const verts=[],inds=[];const rows=8,cols=4;for(let r=0;r<rows;r++){const t=r/(rows-1);for(let c=0;c<cols;c++){const u=c/(cols-1)-.5;const rad=.42+t*1.38;const angle=index*2*Math.PI/total + t*.42 + u*.22;const rr=rad+u*.22;const y=1.9-t*.58 + .12*Math.sin(t*Math.PI);verts.push(Math.cos(angle)*rr,y,Math.sin(angle)*rr);}}for(let r=0;r<rows-1;r++){for(let c=0;c<cols-1;c++){const a=r*cols+c,b=a+1,d=(r+1)*cols+c,e=d+1;inds.push(a,d,b,b,d,e);}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.setIndex(inds);g.computeVertexNormals();return g;}
+function buildTurbineGenerator(){
+  const unit=new THREE.Group();unit.position.set(0,0,1);scene.add(unit);
+  // Voluta e anel da turbina.
+  addMesh(unit,new THREE.TorusGeometry(2.0,.23,12,48),M.steel,[0,1.75,0]);
+  addMesh(unit,new THREE.CylinderGeometry(1.75,1.55,.32,48),M.darkSteel,[0,1.78,0]);
+  turbineRotor=new THREE.Group();turbineRotor.position.set(0,1.65,0);unit.add(turbineRotor);
+  addMesh(turbineRotor,new THREE.LatheGeometry([new THREE.Vector2(.18,-.45),new THREE.Vector2(.34,-.25),new THREE.Vector2(.55,0),new THREE.Vector2(.82,.24),new THREE.Vector2(1.02,.45),new THREE.Vector2(.55,.62),new THREE.Vector2(.18,.72)].map(v=>new THREE.Vector2(v.x,v.y)),48),M.gold,[0,0,0]);
+  addMesh(turbineRotor,new THREE.CylinderGeometry(.48,.72,.9,32),M.steel,[0,.12,0]);
+  const bladeInst=new THREE.InstancedMesh(createBladeGeometry(0,13),new THREE.MeshStandardMaterial({color:0x9baeb3,metalness:.7,roughness:.26,side:THREE.DoubleSide}),13);const bladeDummy=new THREE.Object3D();for(let i=0;i<13;i++){bladeDummy.position.set(0,0,0);bladeDummy.rotation.set(0,i*2*Math.PI/13,0);bladeDummy.updateMatrix();bladeInst.setMatrixAt(i,bladeDummy.matrix);}bladeInst.instanceMatrix.needsUpdate=true;bladeInst.castShadow=true;turbineRotor.add(bladeInst);
+  addMesh(turbineRotor,new THREE.TorusGeometry(1.82,.1,10,48),M.gold,[0,.02,0]);
+  // Palhetas diretrizes fixas ao redor do rotor.
+  const guideGroup=new THREE.Group();unit.add(guideGroup);const guideInst=new THREE.InstancedMesh(new THREE.BoxGeometry(.18,.85,.52),M.copper,20),guideDummy=new THREE.Object3D();for(let i=0;i<20;i++){const a=i/20*Math.PI*2;guideDummy.position.set(Math.cos(a)*2.08,1.78,Math.sin(a)*2.08);guideDummy.rotation.set(0,-a,.22);guideDummy.updateMatrix();guideInst.setMatrixAt(i,guideDummy.matrix);}guideInst.instanceMatrix.needsUpdate=true;guideInst.castShadow=true;guideGroup.add(guideInst);
+  // Eixo vertical compartilhado com o gerador.
+  shaft=addMesh(unit,new THREE.CylinderGeometry(.24,.29,7.5,24),M.steel,[0,5.25,0]);
+  addMesh(unit,new THREE.TorusGeometry(.42,.08,8,24),M.gold,[0,2.55,0]);
+  // Plataforma do gerador, estator e rotor magnético.
+  addMesh(unit,new THREE.CylinderGeometry(3.25,3.4,.45,48),M.darkSteel,[0,8.95,0]);
+  const statorShell=addMesh(unit,new THREE.CylinderGeometry(2.85,2.85,2.5,48,2,true),M.glass,[0,10.35,0]);xrayParts.push(statorShell);
+  addMesh(unit,new THREE.TorusGeometry(2.83,.2,12,64),M.steel,[0,11.58,0]);addMesh(unit,new THREE.TorusGeometry(2.83,.2,12,64),M.steel,[0,9.12,0]);
+  // Bobinas distribuídas no estator.
+  const coils=new THREE.Group();unit.add(coils);const coilInst=new THREE.InstancedMesh(new THREE.TorusGeometry(.26,.105,8,16),M.copper,28),coilBarInst=new THREE.InstancedMesh(new THREE.BoxGeometry(.16,1.5,.16),M.gold,28),coilDummy=new THREE.Object3D();for(let i=0;i<28;i++){const a=i/28*Math.PI*2;coilDummy.position.set(Math.cos(a)*2.46,10.35,Math.sin(a)*2.46);coilDummy.rotation.set(Math.PI/2,0,-a);coilDummy.updateMatrix();coilInst.setMatrixAt(i,coilDummy.matrix);coilDummy.position.set(Math.cos(a)*2.42,10.35,Math.sin(a)*2.42);coilDummy.rotation.set(0,-a,0);coilDummy.updateMatrix();coilBarInst.setMatrixAt(i,coilDummy.matrix);}coilInst.instanceMatrix.needsUpdate=true;coilBarInst.instanceMatrix.needsUpdate=true;coils.add(coilInst,coilBarInst);
+  genRotor=new THREE.Group();genRotor.position.set(0,10.35,0);unit.add(genRotor);
+  addMesh(genRotor,new THREE.CylinderGeometry(1.38,1.38,1.65,32),M.darkSteel,[0,0,0]);
+  addMesh(genRotor,new THREE.TorusGeometry(1.5,.2,12,40),M.gold,[0,0,0],[Math.PI/2,0,0]);
+  const poleRed=new THREE.InstancedMesh(new THREE.BoxGeometry(.42,1.35,.34),M.red,8),poleBlue=new THREE.InstancedMesh(new THREE.BoxGeometry(.42,1.35,.34),M.blue,8),poleDummy=new THREE.Object3D();for(let i=0;i<16;i++){const a=i/16*Math.PI*2;poleDummy.position.set(Math.cos(a)*1.55,0,Math.sin(a)*1.55);poleDummy.rotation.set(0,-a,0);poleDummy.updateMatrix();if(i%2===0)poleRed.setMatrixAt(i/2,poleDummy.matrix);else poleBlue.setMatrixAt((i-1)/2,poleDummy.matrix);}poleRed.instanceMatrix.needsUpdate=true;poleBlue.instanceMatrix.needsUpdate=true;genRotor.add(poleRed,poleBlue);
+  const top=addMesh(unit,new THREE.CylinderGeometry(2.95,2.95,.28,48),new THREE.MeshStandardMaterial({color:0x648492,transparent:true,opacity:.34,metalness:.6,roughness:.25}),[0,11.75,0]);xrayParts.push(top);
+  // Carenagem recortada: aro/guia técnico.
+  addMesh(unit,new THREE.TorusGeometry(3.05,.08,8,64),M.yellow,[0,10.35,0],[Math.PI/2,0,0]);
+  makeLabel('TURBINA FRANCIS · ROTOR E PÁS',[4.8,3.2,2.1],{w:5.1,h:1.1});makeLabel('EIXO MECÂNICO',[3.6,6.0,1.4],{w:3.4,h:.9});makeLabel('GERADOR · ROTOR + ESTATOR',[4.9,11.7,1.5],{w:5.3,h:1.1});makeLabel('TUBO DE SUCÇÃO',[4.1,-1.5,3.0],{w:3.5,h:.9});
+  // Plataforma elevada de inspeção para o gerador.
+  addBox(scene,11,.5,8,M.darkConcrete,[0,7.05,8.5]);for(let x of [-5,5])addBox(scene,.22,7.2,.22,M.steel,[x,3.5,8.5]);
+  // Guarda-corpo na plataforma.
+  for(let x=-5;x<=5;x+=1){addBox(scene,.08,1,.08,M.yellow,[x,7.8,12.2]);}addBox(scene,10,.09,.09,M.yellow,[0,8.3,12.2]);
+}
+
+function buildControlsAndLabels(){
+  makeLabel('RESERVATÓRIO · ENERGIA POTENCIAL',[0,17,-49],{w:6.2,h:1.15});
+  makeLabel('CONDUTO FORÇADO',[3,9,-12],{w:3.9,h:.9});
+  makeLabel('CASA DE FORÇA · CORTE DIDÁTICO',[0,13.6,4],{w:7.2,h:1.1});
+  makeLabel('VERTEDOURO',[ -15,8,-13],{w:2.8,h:.8});
+  makeLabel('JUSANTE · RESTITUIÇÃO AO RIO',[0,1.3,31],{w:5.8,h:1.0});
+  // Sinalização técnica em pilares.
+  addBox(scene,2.5,.12,.4,M.yellow,[-9,4.9,10]);
+}
+
+function makeVRPanel(){
+  vrPanelCanvas=document.createElement('canvas');vrPanelCanvas.width=1024;vrPanelCanvas.height=640;vrPanelCtx=vrPanelCanvas.getContext('2d');
+  vrPanelTexture=new THREE.CanvasTexture(vrPanelCanvas);vrPanelTexture.colorSpace=THREE.SRGBColorSpace;
+  const frame=new THREE.Group();const backing=addMesh(frame,new THREE.BoxGeometry(2.32,1.48,.055),M.darkSteel,[0,0,-.035]);backing.material=new THREE.MeshStandardMaterial({color:0x102b3d,metalness:.55,roughness:.3});
+  const screen=addMesh(frame,new THREE.PlaneGeometry(2.2,1.375),new THREE.MeshBasicMaterial({map:vrPanelTexture,transparent:false,side:THREE.DoubleSide}),[0,0,0]);vrScreen=screen;
+  const edge=addMesh(frame,new THREE.TorusGeometry(.03,1,3,3),M.gold,[0,0,0]);edge.visible=false;
+  camera.add(frame);frame.position.set(0,-.08,-2.15);frame.rotation.set(0,0,0);vrPanel=frame;const vc=document.createElement('canvas');vc.width=512;vc.height=256;const vx=vc.getContext('2d');const vg=vx.createRadialGradient(256,128,26,256,128,180);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(.58,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,1)');vx.fillStyle=vg;vx.fillRect(0,0,512,256);const vt=new THREE.CanvasTexture(vc);vignetteMaterial=new THREE.MeshBasicMaterial({map:vt,transparent:true,opacity:0,depthTest:false,depthWrite:false});const vignette=new THREE.Mesh(new THREE.PlaneGeometry(2.45,1.38),vignetteMaterial);vignette.position.set(0,0,-.5);vignette.renderOrder=1000;camera.add(vignette);drawVRPanel();
+}
+function drawVRPanel(){
+  if(!vrPanelCtx)return;
+  lastPanelDraw=performance.now();
+  const c=vrPanelCtx,w=1024,h=640;
+  const gr=c.createLinearGradient(0,0,w,h);gr.addColorStop(0,'#092336');gr.addColorStop(1,'#0b1728');c.fillStyle=gr;c.fillRect(0,0,w,h);
+  c.fillStyle='#64e4e9';c.font='700 28px Arial';c.fillText('LABORATÓRIO HIDRELÉTRICO',38,48);
+  c.fillStyle='#a9cbd5';c.font='20px Arial';c.fillText(`ETAPA ${currentStep+1}/6  ·  ${steps[currentStep].short.toUpperCase()}`,38,82);
+  c.strokeStyle='#315a6d';c.lineWidth=2;c.beginPath();c.moveTo(38,104);c.lineTo(986,104);c.stroke();
+  c.fillStyle='#17465a';c.strokeStyle='#5dbcc9';c.lineWidth=2;roundRect(c,820,14,165,62,12);c.fill();c.stroke();c.fillStyle='#e8fbff';c.font='700 20px Arial';c.textAlign='center';c.fillText(vrPanelPage==='sources'?'VOLTAR':'CRÉDITOS / FONTES',902,46);c.textAlign='left';
+  if(vrPanelPage==='sources'){
+    c.fillStyle='#eefaff';c.font='700 32px Arial';c.fillText('CRÉDITOS E FONTES CONSULTADAS',40,164);
+    c.fillStyle='#bed5df';c.font='21px Arial';
+    c.fillText('Itaipu Binacional · Casa de máquinas: Francis, gerador e tubo de sucção',42,226);
+    c.fillText('U.S. Department of Energy · How Hydropower Works: queda e vazão',42,286);
+    c.fillText('USGS · Hydroelectric Power: gerador e indução eletromagnética (2026)',42,346);
+    c.fillText('MDN · WebXR permissions and security: contexto seguro e permissões',42,406);
+    c.fillText('Three.js r160 · documentação oficial: renderização e WebXR',42,466);
+    c.fillStyle='#87aab9';c.font='18px Arial';c.fillText('As referências completas e os endereços estão na tela Fontes do modo computador.',42,526);
+    vrPanelTexture.needsUpdate=true;return;
+  }
+  if(vrPanelPage==='quiz'){
+    if(vrQuizResult){
+      c.fillStyle='#64e4e9';c.font='700 30px Arial';c.fillText('RESULTADO DA APRENDIZAGEM',40,160);
+      c.fillStyle='#f3d18d';c.font='700 86px Arial';c.fillText(`${vrQuizScore}/5`,48,285);
+      c.fillStyle='#eefaff';c.font='28px Arial';c.fillText(`${Math.round(vrQuizScore/5*100)}% de acertos`,275,262);
+      c.fillStyle='#bed5df';c.font='22px Arial';canvasWrap(c,'Retome a sequência: energia potencial gravitacional → energia cinética e pressão → energia mecânica de rotação → energia elétrica. A energia se conserva; perdas reduzem a energia útil.',42,340,920,34,3);
+      c.fillStyle='#176887';roundRect(c,40,514,320,72,16);c.fill();c.fillStyle='#f3fbff';c.font='700 24px Arial';c.textAlign='center';c.fillText('VOLTAR À USINA',200,550);c.textAlign='left';
+      vrPanelTexture.needsUpdate=true;return;
+    }
+    const q=quiz[vrQuizIndex];
+    c.fillStyle='#64e4e9';c.font='700 27px Arial';c.fillText(`QUIZ FINAL · QUESTÃO ${vrQuizIndex+1}/5`,40,150);
+    c.fillStyle='#f3fbff';c.font='25px Arial';canvasWrap(c,q.q,42,194,930,31,2);
+    q.o.forEach((option,i)=>{const y=260+i*77;c.fillStyle=vrQuizAnswered&&i===q.a?'#15523f':vrQuizAnswered&&i!==q.a?'#172c39':'#164157';c.strokeStyle=vrQuizAnswered&&i===q.a?'#64d5a0':'#4c91a7';c.lineWidth=2;roundRect(c,42,y,940,62,13);c.fill();c.stroke();c.fillStyle='#f2fbff';c.font='22px Arial';c.fillText(`${String.fromCharCode(65+i)}. ${option}`,62,y+39);});
+    if(vrQuizAnswered){c.fillStyle='#b7e9d2';c.font='19px Arial';canvasWrap(c,quiz[vrQuizIndex].e,44,512,930,24,2);c.fillStyle='#176887';roundRect(c,42,565,270,55,13);c.fill();c.fillStyle='#f3fbff';c.font='700 21px Arial';c.textAlign='center';c.fillText(vrQuizIndex===4?'VER RESULTADO':'PRÓXIMA QUESTÃO',177,594);c.textAlign='left';}
+    else{c.fillStyle='#87aab9';c.font='18px Arial';c.fillText('Aponte para uma alternativa e pressione o gatilho para responder.',42,514);}
+    vrPanelTexture.needsUpdate=true;return;
+  }
+  const d=data;
+  c.fillStyle='#f3fbff';c.font='700 56px Arial';c.fillText(`${fmt(d.Q,1)} m³/s`,40,190);c.fillStyle='#9bb7c4';c.font='22px Arial';c.fillText('VAZÃO VOLUMÉTRICA',42,222);
+  c.fillStyle='#f3d18d';c.font='700 44px Arial';c.fillText(`${fmt(d.Pe/1e6,2)} MW`,535,190);c.fillStyle='#9bb7c4';c.font='22px Arial';c.fillText('POTÊNCIA ELÉTRICA',538,222);
+  c.fillStyle='#dff6fa';c.font='24px Arial';c.fillText(`Velocidade no duto: ${fmt(d.v,2)} m/s`,42,280);c.fillText(`Eixo: ${fmt(d.rpm,1)} rpm  ·  Tensão induzida: ${fmt(d.voltage/1000,2)} kV`,42,318);c.fillText(`Energia acumulada: ${fmtSI(electricEnergy,'J')}`,42,356);
+  c.fillStyle='#9fc4d0';c.font='17px Arial';c.fillText(`Eₚ (${Math.round(volume).toLocaleString('pt-BR')} m³): ${fmtSI(d.Ep,'J')}  ·  E꜀: ${fmtSI(d.Ec,'J')}`,42,386);
+  c.fillStyle='#d2e7ed';c.font='17px Arial';canvasWrap(c,steps[currentStep].text,42,407,930,19,2);
+  const actions=[{x:25,y:455,w:160,h:96,t:'− 5%',id:'minus'},{x:197,y:455,w:160,h:96,t:'+ 5%',id:'plus'},{x:369,y:455,w:190,h:96,t:xray?'RAIOS-X: ON':'RAIOS-X',id:'xray'},{x:571,y:455,w:190,h:96,t:seated?'ALTURA: SENTADO':'ALTURA: EM PÉ',id:'seat'},{x:773,y:455,w:226,h:96,t:currentStep===5?'ABRIR QUIZ':'PRÓXIMA ETAPA',id:'next'}];
+  for(const a of actions){c.fillStyle=a.id==='next'?'#176887':a.id==='xray'?'#66502d':a.id==='seat'?'#235a54':'#164157';c.strokeStyle='#66c9d4';c.lineWidth=3;roundRect(c,a.x,a.y,a.w,a.h,14);c.fill();c.stroke();c.fillStyle='#f3fbff';c.font='700 22px Arial';c.textAlign='center';c.textBaseline='middle';c.fillText(a.t,a.x+a.w/2,a.y+a.h/2);c.textAlign='left';}
+  c.fillStyle='#87aab9';c.font='16px Arial';c.fillText('GATILHO: selecionar · GRIP: agarrar alavanca · STICK ESQ.: teleporte · STICK DIR.: giro 30°',40,610);
+  vrPanelTexture.needsUpdate=true;
+}
+function vrPanelAction(u,v){
+  const x=u*1024,y=(1-v)*640;
+  if(x>810&&y>8&&y<82){if(vrPanelPage==='sources')vrPanelPage=vrPanelReturnPage;else{vrPanelReturnPage=vrPanelPage;vrPanelPage='sources';}drawVRPanel();return true;}
+  if(vrPanelPage==='sources')return false;
+  if(vrPanelPage==='quiz'){
+    if(vrQuizResult){if(x<380&&y>500&&y<610){vrPanelPage='main';drawVRPanel();return true;}return false;}
+    if(!vrQuizAnswered&&y>=260&&y<491){const index=Math.floor((y-260)/77);if(index>=0&&index<3){vrQuizAnswered=true;if(index===quiz[vrQuizIndex].a)vrQuizScore++;drawVRPanel();return true;}}
+    if(vrQuizAnswered&&y>555&&y<630&&x<330){if(vrQuizIndex===quiz.length-1)vrQuizResult=true;else{vrQuizIndex++;vrQuizAnswered=false;}drawVRPanel();return true;}
+    return false;
+  }
+  if(y>455&&y<555){if(x<190){setGate(gate-5);return true;}if(x<360){setGate(gate+5);return true;}if(x<565){toggleXray();return true;}if(x<770){seated=!seated;camera.position.y=seated?1.15:1.65;showToast(seated?'Altura de observação sentada.':'Altura de observação em pé.');drawVRPanel();return true;}if(x<1010){if(currentStep===5)startQuiz();else goStep(currentStep+1);return true;}}
+  return false;
+}
+
+function initScene(){
+  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.06,500);
+  playerRig=new THREE.Group();scene.add(playerRig);playerRig.add(camera);camera.position.set(0,1.65,0);camera.rotation.set(-.12,0,0);
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});const standalone=/Android|Pico|Quest/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio||1,standalone?1.05:1.5));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local-floor');renderer.xr.setFoveation?.(.82);renderer.xr.setFramebufferScaleFactor?.(.85);const oldVRButton=$('btnVR');const officialVRButton=VRButton.createButton(renderer,{optionalFeatures:['local-floor','bounded-floor']});officialVRButton.id='btnVR';officialVRButton.className='topbtn primary';officialVRButton.textContent='Entrar em VR';oldVRButton.replaceWith(officialVRButton);if(!navigator.xr){officialVRButton.textContent='3D · sem WebXR';officialVRButton.title='WebXR não disponível; modo 3D ativo.';}renderer.domElement.className='webgl';renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','Cena 3D interativa da usina hidrelétrica');$('stage').appendChild(renderer.domElement);
+  // Ambiente de reflexão procedural, sem imagens externas.
+  try{pmrem=new THREE.PMREMGenerator(renderer);const env=pmrem.fromScene(new RoomEnvironment(),.04).texture;scene.environment=env;}catch(e){console.warn('Ambiente PMREM indisponível:',e);}
+  buildEnvironment();buildHydraulicCircuit();buildTurbineGenerator();buildControlsAndLabels();makeVRPanel();
+  // Início em uma plataforma de observação dentro da casa de força.
+  playerRig.position.set(0,0,-17);setLookAtWorld(new THREE.Vector3(0,9,-40));
+  // VR controller ray beams.
+  for(let i=0;i<2;i++){const c=renderer.xr.getController(i);c.addEventListener('selectstart',()=>onXRSelect(c));c.addEventListener('squeezestart',()=>onXRSqueezeStart(c));c.addEventListener('squeezeend',()=>{if(vrGrab?.controller===c)vrGrab=null;});const lineGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,-3.5)]);const line=new THREE.Line(lineGeo,new THREE.LineBasicMaterial({color:0x6de8f1,transparent:true,opacity:.8}));c.add(line);scene.add(c);controllers.push(c);controllerLines.push(line);}
+  renderer.xr.addEventListener('sessionstart',()=>{document.body.classList.add('in-vr');showToast('VR ativo · Gatilho seleciona · Grip agarra · thumbstick teleporta/gira');$('btnVR').textContent='VR ativo';vrPanel.visible=true;drawVRPanel();});
+  renderer.xr.addEventListener('sessionend',()=>{document.body.classList.remove('in-vr');$('btnVR').textContent='Entrar em VR';vrGrab=null;showToast('Sessão VR encerrada.');});
+  clock=new THREE.Clock();window.addEventListener('resize',onResize);setupInput();setupUI();
+  renderer.setAnimationLoop(animate);if(!navigator.xr)showToast('WebXR indisponível neste navegador: experiência 3D de mesa ativada automaticamente.');
+  $('loading').style.opacity='0';setTimeout(()=>$('loading').style.display='none',550);
+}
+function setLookAtWorld(target){const p=playerRig.position;const dx=target.x-p.x,dz=target.z-p.z;yaw=Math.atan2(dx,-dz);pitch=clamp(Math.atan2(target.y-(p.y+camera.position.y),Math.hypot(dx,dz)),-.65,.35);playerRig.rotation.y=yaw;camera.rotation.x=pitch;}
+let yaw=0,pitch=-.08;
+function onResize(){if(!camera||!renderer)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}
+function calcPhysics(){const h=PHYS.H;const area=PHYS.Amax*gate/100;const vIdeal=Math.sqrt(2*PHYS.g*h);const Q=PHYS.Cd*area*vIdeal;const v=Q/PHYS.Apipe;const Ph=PHYS.rho*PHYS.g*Q*h;const Pm=Ph*PHYS.etaT;const Pe=Pm*PHYS.etaG;const omegaSync=2*Math.PI*(120*PHYS.f/PHYS.poles)/60;const rpm=Q<.01?0:(gridConnected?120*PHYS.f/PHYS.poles:(120*PHYS.f/PHYS.poles)*Math.sqrt(Q/(PHYS.Cd*PHYS.Amax*vIdeal)));const omega=2*Math.PI*rpm/60;const torque=omega>0?Pm/omega:0;const voltage=PHYS.turns*PHYS.B*PHYS.coilA*omega/Math.SQRT2;const current=voltage>1?Pe/voltage:0;const mass=PHYS.rho*volume;const Ep=mass*PHYS.g*h;const Ec=.5*mass*v*v;data={Q,v,vIdeal,Ph,Pm,Pe,rpm,omega,torque,voltage,current,mass,Ep,Ec,loss:Ph-Pe,omegaSync};return data;}
+function updateMetrics(){const d=calcPhysics();$('mFlow').textContent=`${fmt(d.Q,1)} m³/s`;$('mVelocity').textContent=`${fmt(d.v,2)} m/s`;$('mHydro').textContent=`${fmt(d.Ph/1e6,2)} MW`;$('mElectric').textContent=`${fmt(d.Pe/1e6,2)} MW`;$('mRPM').textContent=`${fmt(d.rpm,1)} rpm`;$('rpmMode').textContent=gridConnected?'Síncrono · 60 Hz · 78 polos':'Modo isolado · didático';$('mEnergy').textContent=fmtSI(electricEnergy,'J');$('mTime').textContent=`t = ${fmt(simTime,1)} s · ${fmt(electricEnergy/3600000,3)} kWh`;$('gateOut').textContent=`${Math.round(gate)}%`;$('gatePct').textContent=`${Math.round(gate)}%`;$('volumeOut').textContent=`${Math.round(volume).toLocaleString('pt-BR')} m³`;$('chartNow').textContent=`${fmt(d.Pe/1e6,2)} MW`;if(vrPanelCtx&&performance.now()-lastPanelDraw>140)drawVRPanel();return d;}
+function setGate(v,refresh=true){gate=clamp(v,0,100);$('gateSlider').value=gate;if(gatePivot)gatePivot.rotation.z=-.45+gate/100*.9;if(gateIndicator)gateIndicator.material=M.yellow;if(refresh){updateMetrics();drawVRPanel();}}
+function toggleXray(){xray=!xray;for(const o of xrayParts){o.material.transparent=true;o.material.opacity=xray?.12:.34;}for(const w of buildingWalls){w.material.opacity=xray?.055:.27;}if(penstockWater)penstockWater.material.opacity=xray?.6:.42;$('btnXray').textContent=xray?'◉ Raios-X: ON':'◉ Raios-X';drawVRPanel();showToast(xray?'Visão de raios-X ativada: componentes internos destacados.':'Visão estrutural normal.');}
+function updateChart(){const c=$('powerChart');if(!c)return;const ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#071a27';ctx.fillRect(0,0,w,h);ctx.strokeStyle='rgba(120,170,190,.18)';ctx.lineWidth=1;for(let y=1;y<4;y++){ctx.beginPath();ctx.moveTo(0,y*h/4);ctx.lineTo(w,y*h/4);ctx.stroke();}const max=Math.max(1,...history,1);ctx.beginPath();history.forEach((v,i)=>{const x=i/(history.length-1)*w,y=h-8-(v/max)*(h-20);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.lineWidth=4;ctx.strokeStyle='#57d6df';ctx.stroke();ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();ctx.fillStyle='rgba(67,181,200,.13)';ctx.fill();ctx.fillStyle='#88aab8';ctx.font='18px Arial';ctx.fillText(`${(max/1e6).toFixed(1)} MW`,12,22);}
+function updateParticles(obj,dt,speedFactor){if(!obj)return;const {curve,phases,count}=obj.userData;const pos=obj.geometry.attributes.position;const advance=speedFactor<=.001?0:dt*(.018+.16*speedFactor);for(let i=0;i<count;i++){phases[i]=(phases[i]+advance*(.65+(i%7)*.07))%1;const p=curve.getPointAt(phases[i]);pos.setXYZ(i,p.x,p.y,p.z);}pos.needsUpdate=true;}
+function updateMovingParts(dt){const d=data;const rpmFactor=d.rpm>0?d.rpm/60:0;if(turbineRotor)turbineRotor.rotation.y+=dt*rpmFactor*2*Math.PI;if(genRotor)genRotor.rotation.y+=dt*rpmFactor*2*Math.PI;if(shaft)shaft.rotation.y+=dt*rpmFactor*2*Math.PI;const qfrac=d.Q/(PHYS.Cd*PHYS.Amax*Math.sqrt(2*PHYS.g*PHYS.H));updateParticles(flowPoints,dt,qfrac);updateParticles(spillPoints,dt,Math.max(.04,gate/100));if(waterTex)waterTex.offset.x=(waterTex.offset.x+dt*.012*qfrac)%1;}
+function updatePlayer(dt){if(renderer.xr.isPresenting){updateXRStick();return;}const speed=keys.ShiftLeft||keys.ShiftRight?7:3.6;const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));const move=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);if(move.lengthSq()>0){move.normalize().multiplyScalar(speed*dt);playerRig.position.add(move);}playerRig.position.x=clamp(playerRig.position.x,-23,23);playerRig.position.z=clamp(playerRig.position.z,-52,65);}
+function pulseVignette(level=.82,duration=240){if(!vignetteMaterial)return;vignetteMaterial.opacity=level;setTimeout(()=>{if(vignetteMaterial)vignetteMaterial.opacity=0;},duration);}
+function teleportTo(pos,look){if(renderer.xr.isPresenting){pulseVignette(.9,260);setTimeout(()=>{playerRig.position.set(pos[0],pos[1],pos[2]);if(look)setLookAtWorld(new THREE.Vector3(...look));},115);return;}const fade=document.createElement('div');fade.style.cssText='position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 12%,rgba(0,0,0,.96) 88%);z-index:25;opacity:0;pointer-events:none;transition:opacity .12s';document.body.appendChild(fade);setTimeout(()=>{fade.style.opacity='1';setTimeout(()=>{playerRig.position.set(pos[0],pos[1],pos[2]);if(look)setLookAtWorld(new THREE.Vector3(...look));fade.style.opacity='0';setTimeout(()=>fade.remove(),170);},110);},0);}
+function goStep(i){currentStep=clamp(i,0,steps.length-1);completed.add(currentStep);const s=steps[currentStep];$('stepPill').textContent=`ETAPA ${currentStep+1} / 6 · ${s.short.toUpperCase()}`;$('lessonKicker').textContent=s.kicker;$('lessonText').textContent=s.text;$('lessonFormula').textContent=s.formula;$('progressText').textContent=`${completed.size}/6`;$('journey').querySelectorAll('.step').forEach((e,j)=>{e.classList.toggle('active',j===currentStep);e.classList.toggle('done',completed.has(j));});$('btnPrev').disabled=currentStep===0;$('btnNext').textContent=currentStep===5?'Finalizar · Quiz →':'Próxima etapa →';teleportTo(s.target,s.look);showCaption(s.caption);drawVRPanel();if(narrationOn)speak(s.text);}
+function showCaption(t){if(!$('caption'))return;$('caption').textContent=t;$('caption').style.display='block';clearTimeout(showCaption.t);showCaption.t=setTimeout(()=>$('caption').style.display='none',6500);}
+function populateJourney(){const root=$('journey');root.innerHTML='';steps.forEach((s,i)=>{const d=document.createElement('div');d.className='step'+(i===0?' active':'');d.innerHTML=`<div class="num">${i+1}</div><div><strong>${s.title}</strong><span>${s.kicker.replace('MISSÃO','Missão').toLowerCase()}</span></div>`;d.addEventListener('click',()=>goStep(i));root.appendChild(d);});}
+function speak(text){if(muted||!('speechSynthesis'in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='pt-BR';u.rate=.95;window.speechSynthesis.speak(u);}
+function setupUI(){populateJourney();$('gateSlider').addEventListener('input',e=>setGate(+e.target.value));$('volumeSlider').addEventListener('input',e=>{volume=+e.target.value;updateMetrics();});$('btnGateOpen').addEventListener('click',()=>setGate(gate+10));$('btnGateClose').addEventListener('click',()=>setGate(gate-10));$('btnResetEnergy').addEventListener('click',()=>{electricEnergy=0;simTime=0;history.fill(0);updateMetrics();updateChart();showToast('Contador de energia zerado.');});$('gridSwitch').addEventListener('click',toggleGrid);$('gridSwitch').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleGrid();}});$('btnXray').addEventListener('click',toggleXray);$('btnNarrate').addEventListener('click',()=>{narrationOn=!narrationOn;$('btnNarrate').textContent=narrationOn?'🔊 Narrando':'🔊 Narrar';if(narrationOn)speak(steps[currentStep].text);});$('btnMute').addEventListener('click',()=>{muted=!muted;if(muted&&'speechSynthesis'in window)window.speechSynthesis.cancel();$('btnMute').textContent=muted?'♪ Som mudo':'♪ Mudo';});$('btnPrev').addEventListener('click',()=>goStep(currentStep-1));$('btnNext').addEventListener('click',()=>{if(currentStep===5)openQuiz();else goStep(currentStep+1);});$('btnCredits').addEventListener('click',openCredits);$('modalClose').addEventListener('click',closeModal);$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});setGate(0);updateMetrics();updateChart();}
+function toggleGrid(){gridConnected=!gridConnected;$('gridSwitch').classList.toggle('on',gridConnected);$('gridSwitch').setAttribute('aria-checked',String(gridConnected));updateMetrics();showToast(gridConnected?'Gerador conectado: rotação síncrona definida por 60 Hz e 78 polos.':'Modo isolado didático: rotação aproximada varia com a vazão.');}
+function openModal(title,html){$('modalTitle').textContent=title;$('modalBody').innerHTML=html;$('modal').classList.add('show');}
+function closeModal(){$('modal').classList.remove('show');}
+function openCredits(){openModal('Créditos e fontes',`<p><strong>Laboratório Hidrelétrico — modelo didático interativo</strong></p><p>Cenário e equipamentos construídos proceduralmente em Three.js. A referência visual enviada pelo professor orientou a composição geral do reservatório, barragem em arco, vertedouro e canal de restituição. O modelo interno é esquemático e não representa dimensões executivas ou uma unidade real específica.</p><h3>Referências conceituais consultadas</h3><div class="sourceList"><p>• <a href="https://www.itaipu.gov.py/energia/generacion/casa-de-maquinas" target="_blank" rel="noopener">Itaipu Binacional — Casa de máquinas</a>: componentes da unidade geradora, turbina Francis, eixo, gerador, estator e tubo de sucção.</p><p>• <a href="https://www.energy.gov/cmei/water/how-hydropower-works" target="_blank" rel="noopener">U.S. Department of Energy — How Hydropower Works</a>: relação entre vazão, queda hidráulica, conduto, turbina e gerador.</p><p>• <a href="https://www.usgs.gov/water-science-school/science/hydroelectric-power-how-it-works" target="_blank" rel="noopener">USGS — Hydroelectric Power: How it Works</a>: cadeia turbina–eixo–gerador e princípio de indução eletromagnética (página consultada em 10/11/2026).</p><p>• <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Permissions_and_security" target="_blank" rel="noopener">MDN — WebXR permissions and security</a>: contexto seguro e permissões necessárias para VR imersiva.</p><p>• <a href="https://threejs.org/docs/" target="_blank" rel="noopener">Three.js Documentation</a>: renderização, controles WebXR e recursos gráficos.</p></div><h3>Notas de rigor físico</h3><p>O modelo usa Q = CᵈA√(2gH), v = Q/A<sub>duto</sub>, P<sub>h</sub> = ρgQH e eficiências explícitas. O cálculo da tensão induzida usa uma bobina equivalente simplificada. Os polos do rotor representam eletroímãs do sistema de excitação, não ímãs permanentes. Em operação conectada à rede, a frequência e o número de polos determinam a rotação síncrona. O contador de energia integra P<sub>e</sub>·Δt enquanto a simulação está ativa.</p><p><strong>Escopo:</strong> parâmetros de queda, área, eficiência e bobina são didáticos e ajustáveis apenas nos controles descritos; não use os resultados para projeto ou operação de barragens reais.</p><p><strong>Tecnologia:</strong> Three.js r160.0, módulos ES via jsDelivr, código próprio em um único arquivo.</p>`);}
+
+const quiz=[
+ {q:'Qual grandeza representa a energia armazenada pela água devido à sua altura em relação ao nível de jusante?',o:['Energia potencial gravitacional','Energia elétrica','Energia térmica'],a:0,e:'A energia potencial gravitacional é Eₚ = mgh. A massa de água e a diferença de altura determinam a energia disponível antes do escoamento.'},
+ {q:'Qual é a unidade correta da vazão volumétrica Q?',o:['m/s','m³/s','J'],a:1,e:'Vazão volumétrica é volume por tempo (m³/s). Velocidade é deslocamento por tempo (m/s). No modelo, v = Q/A do conduto.'},
+ {q:'O que a turbina Francis faz na unidade geradora?',o:['Armazena água no reservatório','Transforma energia do escoamento em rotação mecânica','Converte diretamente eletricidade em pressão'],a:1,e:'A água transfere quantidade de movimento e torque às pás do rotor. A turbina transforma energia hidráulica em energia mecânica de rotação.'},
+ {q:'Como o gerador produz tensão elétrica?',o:['Pela variação do fluxo magnético nas bobinas','Pelo atrito da água no concreto','Pela compressão do tubo de sucção'],a:0,e:'A Lei de Faraday relaciona a força eletromotriz induzida à taxa de variação do fluxo magnético: ε = −N·dΦ/dt.'},
+ {q:'Por que a potência elétrica é menor que a potência hidráulica disponível?',o:['Porque a energia desaparece','Porque a água deixa de ter massa','Porque há perdas hidráulicas, mecânicas e elétricas'],a:2,e:'A energia se conserva, mas nem toda energia disponível vira eletricidade útil. Turbulência, atrito, aquecimento, ruído e perdas elétricas reduzem a potência de saída.'}
+];let quizIndex=0,quizScore=0,quizAnswered=false;
+function openQuiz(){quizIndex=0;quizScore=0;quizAnswered=false;renderQuiz();$('modal').classList.add('show');}
+function startQuiz(){if(renderer.xr.isPresenting){vrQuizIndex=0;vrQuizScore=0;vrQuizAnswered=false;vrQuizResult=false;vrPanelPage='quiz';drawVRPanel();showToast('Quiz em VR iniciado. Aponte para uma das três alternativas e pressione o gatilho.');}else openQuiz();}
+function renderQuiz(){const q=quiz[quizIndex];$('modalTitle').textContent='Quiz final · Transformação de energia';let html=`<div class="quizProgress">Questão ${quizIndex+1} de ${quiz.length} · Acertos: ${quizScore}</div><div class="quizQ"><h3>${q.q}</h3>`;q.o.forEach((o,i)=>html+=`<label class="option"><input type="radio" name="quizOpt" value="${i}" ${quizAnswered?'disabled':''}><span>${o}</span></label>`);html+='</div><div id="quizFeedback"></div><div class="quizFoot"><span class="quizProgress">Objetivos: energia potencial, cinética, turbina e indução</span><button id="quizAction" class="primary" disabled>Verificar resposta</button></div>';$('modalBody').innerHTML=html;const radios=[...$('modalBody').querySelectorAll('input[name=quizOpt]')];const action=$('quizAction');radios.forEach(r=>r.addEventListener('change',()=>{action.disabled=false;}));action.addEventListener('click',()=>{if(!quizAnswered){const selected=radios.find(r=>r.checked);if(!selected)return;const ok=+selected.value===q.a;if(ok)quizScore++;quizAnswered=true;radios.forEach((r,i)=>{r.disabled=true;if(i===q.a)r.parentElement.style.borderColor='#58c99b';else if(i===+selected.value&&!ok)r.parentElement.style.borderColor='#dc896d';});$('quizFeedback').innerHTML=`<div class="feedback ${ok?'':'wrong'}"><strong>${ok?'Correto!':'Ainda não.'}</strong> ${q.e}</div>`;action.disabled=false;action.textContent=quizIndex===quiz.length-1?'Ver resultado':'Próxima questão';}else{if(quizIndex<quiz.length-1){quizIndex++;quizAnswered=false;renderQuiz();}else{renderQuizResult();}}});}
+function renderQuizResult(){const percent=Math.round(quizScore/quiz.length*100);$('modalTitle').textContent='Resultado da aprendizagem';$('modalBody').innerHTML=`<div style="text-align:center;padding:20px 4px"><div style="font-size:52px;font-weight:800;color:${percent>=60?'#8ce0aa':'#f0bd65'}">${quizScore}/${quiz.length}</div><h3>${percent>=80?'Excelente investigação!':percent>=60?'Bom trabalho!':'Vamos retomar a trilha.'}</h3><p>Você acertou ${percent}% das questões. Relembre a sequência:</p><div class="formula" style="font-size:15px;line-height:1.8">Energia potencial → cinética/pressão → mecânica → elétrica</div><p style="color:#9dbcc7">A simulação continua disponível para testar outros valores de abertura da comporta e comparar vazão, potência e energia acumulada.</p><button id="quizAgain" class="small">Refazer quiz</button> <button id="quizClose" class="primary">Voltar à usina</button></div>`;$('quizAgain').addEventListener('click',openQuiz);$('quizClose').addEventListener('click',closeModal);}
+
+function setupInput(){
+  window.addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(e.code==='Space'){paused=!paused;showToast(paused?'Simulação pausada.':'Simulação retomada.');}if(e.code==='Escape'&&$('modal').classList.contains('show'))closeModal();});window.addEventListener('keyup',e=>keys[e.code]=false);
+  const canvas=renderer.domElement;
+  canvas.addEventListener('pointerdown',e=>{canvas.focus();const hit=pickLever(e.clientX,e.clientY);if(hit){dragState={pointerId:e.pointerId,lastY:e.clientY,opening:gate};canvas.setPointerCapture(e.pointerId);e.preventDefault();return;}if(e.pointerType==='touch'){lookState={pointerId:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);}else if(e.button===0){lookState={pointerId:e.pointerId,x:e.clientX,y:e.clientY};if(canvas.requestPointerLock&&e.detail===1){canvas.requestPointerLock();}}});
+  canvas.addEventListener('pointermove',e=>{if(dragState&&dragState.pointerId===e.pointerId){const dy=dragState.lastY-e.clientY;dragState.lastY=e.clientY;setGate(gate+dy*.32);return;}if(lookState&&lookState.pointerId===e.pointerId){const dx=e.clientX-lookState.x,dy=e.clientY-lookState.y;lookState.x=e.clientX;lookState.y=e.clientY;yaw-=dx*.004;pitch=clamp(pitch-dy*.003,-1.25,1.05);playerRig.rotation.y=yaw;camera.rotation.x=pitch;}});
+  const clearDrag= e=>{if(dragState&&dragState.pointerId===e.pointerId)dragState=null;if(lookState&&lookState.pointerId===e.pointerId)lookState=null;};canvas.addEventListener('pointerup',clearDrag);canvas.addEventListener('pointercancel',clearDrag);document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement===canvas){lookState=null;} });document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&!renderer.xr.isPresenting){yaw-=e.movementX*.0022;pitch=clamp(pitch-e.movementY*.0022,-1.25,1.05);playerRig.rotation.y=yaw;camera.rotation.x=pitch;}});
+  canvas.addEventListener('wheel',e=>{if(e.deltaY>0)teleportNudge(1);else teleportNudge(-1);},{passive:true});
+}
+function pickLever(clientX,clientY){const r=renderer.domElement.getBoundingClientRect();mouse.x=((clientX-r.left)/r.width)*2-1;mouse.y=-((clientY-r.top)/r.height)*2+1;raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObject(gateHit,true)[0];return !!hit;}
+function teleportNudge(direction){const f=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const next=playerRig.position.clone().addScaledVector(f,direction*2.6);teleportTo([clamp(next.x,-23,23),next.y,clamp(next.z,-52,65)],null);}
+function xrRay(controller){const origin=new THREE.Vector3();controller.getWorldPosition(origin);const q=new THREE.Quaternion();controller.getWorldQuaternion(q);const dir=new THREE.Vector3(0,0,-1).applyQuaternion(q).normalize();raycaster.set(origin,dir);}
+function onXRSelect(controller){xrRay(controller);const ui=vrScreen?raycaster.intersectObject(vrScreen,false)[0]:null;if(ui&&vrPanelVisible){if(ui.uv)vrPanelAction(ui.uv.x,ui.uv.y);return;}const leverHit=raycaster.intersectObject(gateHit,true)[0];if(leverHit){setGate(gate+5);showToast('Comporta ajustada em +5%.');}}
+function onXRSqueezeStart(controller){xrRay(controller);const hit=raycaster.intersectObject(gateHit,true)[0];if(hit){const p=new THREE.Vector3();controller.getWorldPosition(p);vrGrab={controller,startY:p.y,startGate:gate};showToast('Alavanca agarrada: mova o controle para cima/baixo.');}}
+function updateXRStick(){const session=renderer.xr.getSession();if(!session)return;for(const source of session.inputSources){const gp=source.gamepad;if(!gp||!gp.axes)continue;const axes=gp.axes;const sx=axes.length>=4?axes[2]:(axes[0]||0);const sy=axes.length>=4?axes[3]:(axes[1]||0);if(source.handedness==='right'||!source.handedness){if(Math.abs(sx)>.72&&!axisLatch.turn){pulseVignette(.48,180);playerRig.rotation.y+=Math.sign(sx)*Math.PI/6;axisLatch.turn=true;}if(Math.abs(sx)<.25)axisLatch.turn=false;}if(source.handedness==='left'||!source.handedness){if(Math.abs(sy)>.78&&!axisLatch.y){const f=new THREE.Vector3(Math.sin(playerRig.rotation.y),0,-Math.cos(playerRig.rotation.y));const step=sy<0?3.2:-3.2;const p=playerRig.position.clone().addScaledVector(f,step);teleportTo([clamp(p.x,-23,23),p.y,clamp(p.z,-52,65)],null);axisLatch.y=true;}if(Math.abs(sy)<.25)axisLatch.y=false;}}
+}
+function enterVR(){if(!navigator.xr)showToast('WebXR não está disponível neste navegador. A versão 3D continua ativa.');}
+
+
+function updateVRPanelPlacement(){if(!vrPanel)return;vrPanel.visible=renderer.xr.isPresenting&&vrPanelVisible;}
+function animate(){const dt=Math.min(clock.getDelta(),.05);if(!paused){simTime+=dt;const d=calcPhysics();electricEnergy+=d.Pe*dt;historyClock+=dt;if(historyClock>.35){history.push(d.Pe);history.shift();historyClock=0;updateChart();}updatePlayer(dt);updateMovingParts(dt);if(vrGrab){const p=new THREE.Vector3();vrGrab.controller.getWorldPosition(p);setGate(vrGrab.startGate+(vrGrab.startY-p.y)*22,false);}if(flowPoints)flowPoints.material.opacity=gate>0?.85:0;if(spillPoints)spillPoints.material.opacity=gate>0?.75:.08;}
+  uiClock+=dt;if(uiClock>.12){updateMetrics();uiClock=0;}updateVRPanelPlacement();renderer.render(scene,camera);
+  if(debugMode){fpsFrames++;const now=performance.now();if(now-fpsLast>=500){fps=fpsFrames*1000/(now-fpsLast);fpsFrames=0;fpsLast=now;}const i=renderer.info.render;$('debug').style.display='block';$('debug').textContent=`FPS ${fps.toFixed(0)}  |  TRI ${i.triangles.toLocaleString('pt-BR')}  |  CALLS ${i.calls}`;}
+}
+
+// Acessibilidade: posição sentada/em pé pode ser alternada pelo atalho C.
+window.addEventListener('keydown',e=>{if(e.code==='KeyC'){seated=!seated;camera.position.y=seated?1.15:1.65;showToast(seated?'Altura de observação sentada.':'Altura de observação em pé.');}});
+
+populateJourney();
+$('loadstatus').textContent='Carregando estruturas e superfícies…';$('loadbar').firstElementChild.style.width='55%';
+try{initScene();$('loadbar').firstElementChild.style.width='100%';}catch(err){console.error(err);$('loadstatus').textContent='Falha ao iniciar o 3D: '+err.message;$('loading').querySelector('p').textContent='Não foi possível iniciar o módulo 3D. Verifique a conexão com a CDN do Three.js e recarregue o arquivo.';}
+</script>
+</body>
+</html>
